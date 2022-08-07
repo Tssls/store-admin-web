@@ -1,4 +1,4 @@
-const originUrl = 'http://127.0.0.1:8888/';
+const originUrl = 'http://120.25.229.237:8888/';
 
 const post = (url, data) => {
   return fetch(originUrl + url, {
