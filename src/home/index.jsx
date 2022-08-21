@@ -81,7 +81,7 @@ const Home = () => {
         render: (_, record) => (
           <div size="middle">
             <Popconfirm
-              title="Are you sure to delete this task?"
+              title="确定删除门店?"
               onConfirm={() => { deleteStore(record) }}
               okText="确认"
               cancelText="取消"

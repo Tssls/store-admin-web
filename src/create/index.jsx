@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext, useMemo } from 'react';
-import { Button, Form, Input,message } from 'antd';
+import React, { useState, useEffect, useContext, useMemo, useCallback } from 'react';
+import { Button, Form, Input, message } from 'antd';
 import { useHistory } from 'react-router-dom';
 import TimeModal from './timeModal';
 import { getDate, getParams } from '../util';
@@ -15,7 +15,7 @@ function CreateStore() {
     const [timeList, setList] = useState([]);
 
     const type = useMemo(() => getParams('type'), []);
-    
+
     useEffect(() => {
         if (type === 'edit') {
             setList(state.temp.timer || []);
@@ -26,7 +26,7 @@ function CreateStore() {
         dispatch({
             type: 'set_temp',
             payload: {}
-          });
+        });
         history.go(-1);
     }
     const onFinish = (values) => {
@@ -34,7 +34,7 @@ function CreateStore() {
         values.timer = JSON.stringify(timeList);
         let request;
         if (type === 'edit') {
-            request = xhrUpdateStore({ ...values, ...{ id: state.temp.id }});
+            request = xhrUpdateStore({ ...values, ...{ id: state.temp.id } });
         } else {
             request = xhrCreateStore(values);
         }
@@ -64,6 +64,14 @@ function CreateStore() {
         setList(list);
     }
 
+    const openLink = useCallback((type) => {
+        if (type === 'gd') {
+            window.open('https://lbs.amap.com/tools/picker');
+        } else {
+            window.open('http://api.map.baidu.com/lbsapi/getpoint/index.html');
+        }
+    }, [])
+    console.log('state', state);
     return (
         <div>
             <Button onClick={goBack} type="primary">返回列表页</Button>
@@ -79,8 +87,9 @@ function CreateStore() {
                     name: state.temp.name || '',
                     address: state.temp.address,
                     city: state.temp.city,
-                    ipone: state.temp.ipone,
-                    coordinate: JSON.stringify(state.temp.coordinate)
+                    iphone: state.temp.iphone,
+                    gd_coordinate: state.temp.gd_coordinate,
+                    bd_coordinate: state.temp.bd_coordinate
                 }}
                 onFinish={onFinish}
                 onFinishFailed={onFinishFailed}
@@ -135,14 +144,14 @@ function CreateStore() {
                 >
                     <div>
                         <Button onClick={openModal} >{timeList.length > 0 ? '修改营业时间' : '选择营业时间'}</Button>
-                       { timeList.length > 0 &&  <div className='hours-box'>
+                        {timeList.length > 0 && <div className='hours-box'>
                             {
-                                [{key:'日期',value:['开始时间','结束时间']}].concat(timeList).map(item => {
+                                [{ key: '日期', value: ['开始时间', '结束时间'] }].concat(timeList).map(item => {
                                     return (
                                         <div className='business-hours' key={item.key}>
                                             <span>{getDate(item.key)}</span>
-                                            <span>{item.value[0] === '00:00:00' ? '休息中' :item.value[0]}</span>
-                                            <span>{item.value[1] === '00:00:00' ? '休息中' :item.value[1]}</span>
+                                            <span>{item.value[0] === '00:00:00' ? '休息中' : item.value[0]}</span>
+                                            <span>{item.value[1] === '00:00:00' ? '休息中' : item.value[1]}</span>
                                         </div>
                                     )
                                 })
@@ -152,7 +161,7 @@ function CreateStore() {
                 </Form.Item>
                 <Form.Item
                     label="电话号码"
-                    name="ipone"
+                    name="iphone"
                     rules={[
                         {
                             required: true,
@@ -163,16 +172,30 @@ function CreateStore() {
                     <Input style={{ width: '300px' }} />
                 </Form.Item>
                 <Form.Item
-                    label="地图坐标"
-                    name="coordinate"
+                    label="高德地图坐标"
+                    name="gd_coordinate"
                     rules={[
                         {
                             required: true,
-                            message: '地图坐标不能为空',
+                            message: '高德地图坐标不能为空',
                         },
                     ]}
                 >
-                    <Input style={{ width: '300px' }} />
+                    <Input addonAfter={<Button size="small" onClick={() => { openLink('gd') }} type="link">获取高德坐标</Button>} style={{ width: '400px' }} />
+                </Form.Item>
+                <Form.Item
+                    label="百度地图坐标"
+                    name="bd_coordinate"
+                    rules={[
+                        {
+                            required: true,
+                            message: '百度地图坐标不能为空',
+                        },
+                    ]}
+                >
+                    <Input addonAfter={
+                        <Button size="small" onClick={() => { openLink('bd') }
+                        } type="link">获取百度坐标</Button>} style={{ width: '400px' }} />
                 </Form.Item>
                 <Form.Item
                     wrapperCol={{
@@ -181,11 +204,11 @@ function CreateStore() {
                     }}
                 >
                     <Button type="primary" htmlType="submit">
-                        {type === 'edit' ?'编辑' :'新增'}
+                        {type === 'edit' ? '编辑' : '新增'}
                     </Button>
                 </Form.Item>
             </Form>
-           {isModal&& <TimeModal
+            {isModal && <TimeModal
                 isModal={isModal}
                 getTimeList={getTimeList}
                 closeModal={closeModal}
